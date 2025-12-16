@@ -7,6 +7,7 @@ since we are learning, this is a special case.
 Once you have ensured that the package and its dependencies are installed,
 feel free to delete this file.
 """
+
 from pkg_resources import DistributionNotFound, get_distribution
 
 import toml
@@ -24,7 +25,7 @@ def test_dependencies():
         pd.__version__,
         pytest.__version__,
         pytest_cov.__version__,
-        pylint.__version__
+        pylint.__version__,
     )
     assert len(deps) == 4
 
