@@ -10,6 +10,7 @@ authors = [
 ]
 dependencies = [
     "pandas",
+    "setuptools",
 ]
 
 [build-system]
