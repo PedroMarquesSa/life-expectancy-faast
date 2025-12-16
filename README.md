@@ -1,3 +1,5 @@
+[![CI](https://github.com/PedroMarquesSa/life-expectancy-faast/actions/workflows/ci.yml/badge.svg)](https://github.com/PedroMarquesSa/life-expectancy-faast/actions/workflows/ci.yml)
+
 # FAAST Advance Foundations Assignments
 
 ## Introduction
