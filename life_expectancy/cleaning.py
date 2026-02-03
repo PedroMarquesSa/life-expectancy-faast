@@ -72,9 +72,9 @@ class Region(Enum):
     def countries(cls) -> list["Region"]:
         """
         Return a list of Region members that represent actual countries.
-        
+
         Excludes aggregate regions like EU27, EA18, EFTA, etc.
-        
+
         Returns:
             List of Region enum members representing individual countries
         """
@@ -91,7 +91,7 @@ class Region(Enum):
             "EU28",    # European Union (28 countries)
             "FX",      # France (metropolitan)
         }
-        
+
         return [region for region in cls if region.name not in aggregates]
 
 
