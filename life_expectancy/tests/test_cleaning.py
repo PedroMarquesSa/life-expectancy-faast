@@ -5,7 +5,7 @@ from unittest.mock import patch, MagicMock, call
 import pandas as pd
 import pytest
 
-from life_expectancy.cleaning import load_data, clean_data, save_data, main
+from life_expectancy.cleaning import load_data, clean_data, save_data, main, Region
 from . import FIXTURES_DIR
 
 
@@ -60,7 +60,7 @@ def test_clean_data_no_country_filter(eu_life_expectancy_raw):
 
 def test_clean_data_with_country_filter(eu_life_expectancy_raw):
     """Test clean_data with country filtering"""
-    cleaned = clean_data(eu_life_expectancy_raw, country="PT")
+    cleaned = clean_data(eu_life_expectancy_raw, country=Region.PT)
     
     # Verify only PT data is present
     assert (cleaned["region"] == "PT").all()
@@ -70,14 +70,15 @@ def test_clean_data_with_country_filter(eu_life_expectancy_raw):
 
 
 def test_clean_data_invalid_country(eu_life_expectancy_raw):
-    """Test clean_data raises error for non-existent country"""
+    """Test clean_data raises error for non-existent region in data"""
+    # Use a valid Region enum that doesn't exist in the fixture data
     with pytest.raises(ValueError, match="No data found for country code"):
-        clean_data(eu_life_expectancy_raw, country="INVALID")
+        clean_data(eu_life_expectancy_raw, country=Region.UK)
 
 
 def test_clean_data_transforms_correctly(eu_life_expectancy_raw):
     """Test that clean_data performs expected transformations"""
-    cleaned = clean_data(eu_life_expectancy_raw, country="PT")
+    cleaned = clean_data(eu_life_expectancy_raw, country=Region.PT)
     
     # Verify index is reset (starts at 0)
     assert cleaned.index[0] == 0
@@ -104,7 +105,7 @@ def test_save_data_default_path(mock_to_csv):
     })
     
     # Call save_data with default path
-    save_data(df, country="PT")
+    save_data(df, country=Region.PT)
     
     # Verify to_csv was called
     assert mock_to_csv.called
@@ -128,7 +129,7 @@ def test_save_data_custom_path(mock_to_csv):
     })
     
     custom_path = "/tmp/test_output.csv"
-    save_data(df, country="PT", output_file=custom_path)
+    save_data(df, country=Region.PT, output_file=custom_path)
     
     # Verify to_csv was called with the custom path
     assert mock_to_csv.called
@@ -154,8 +155,8 @@ def test_main_function(mock_load, mock_clean, mock_save):
     
     # Verify all functions were called
     mock_load.assert_called_once()
-    mock_clean.assert_called_once_with(mock_df_raw, country='PT')
-    mock_save.assert_called_once_with(mock_df_clean, country='PT')
+    mock_clean.assert_called_once_with(mock_df_raw, country=Region.PT)
+    mock_save.assert_called_once_with(mock_df_clean, country=Region.PT)
     
     # Verify the cleaned data is returned
     assert result is mock_df_clean
@@ -177,9 +178,48 @@ def test_main_function_default_country(mock_load, mock_clean, mock_save):
     with patch('sys.argv', ['cleaning.py']):
         result = main()
     
-    # Verify clean_data was called with default country 'PT'
-    mock_clean.assert_called_once_with(mock_df_raw, country='PT')
-    mock_save.assert_called_once_with(mock_df_clean, country='PT')
+    # Verify clean_data was called with default Region.PT
+    mock_clean.assert_called_once_with(mock_df_raw, country=Region.PT)
+    mock_save.assert_called_once_with(mock_df_clean, country=Region.PT)
+
+
+# Region Enum Tests
+
+def test_region_countries():
+    """Test that Region.countries() returns only actual countries"""
+    countries = Region.countries()
+    
+    # Verify it returns a list
+    assert isinstance(countries, list)
+    
+    # Verify all items are Region enum members
+    assert all(isinstance(region, Region) for region in countries)
+    
+    # Verify we have countries (should be less than total regions)
+    assert len(countries) > 0
+    assert len(countries) < len(Region)
+    
+    # Verify actual countries are included
+    assert Region.PT in countries
+    assert Region.ES in countries
+    assert Region.FR in countries
+    assert Region.IT in countries
+    assert Region.DE in countries
+    
+    # Verify aggregates are excluded
+    assert Region.EU27_2007 not in countries
+    assert Region.EU27_2020 not in countries
+    assert Region.EU28 not in countries
+    assert Region.EA18 not in countries
+    assert Region.EA19 not in countries
+    assert Region.EFTA not in countries
+    assert Region.EEA30_2007 not in countries
+    assert Region.EEA31 not in countries
+    assert Region.DE_TOT not in countries
+    assert Region.FX not in countries
+    
+    # Verify the count is correct (56 total - 10 aggregates = 46 countries)
+    assert len(countries) == 46
 
 
 # Integration Test
