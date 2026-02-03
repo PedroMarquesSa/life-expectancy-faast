@@ -71,6 +71,9 @@ def clean_data(df: pd.DataFrame, country: str = None) -> pd.DataFrame:
         if df.empty:
             raise ValueError(f"No data found for country code: {country}")
 
+    # Reset index to have a clean sequential index
+    df = df.reset_index(drop=True)
+
     return df
 
 
@@ -106,6 +109,7 @@ def main():  # pragma: no cover
     data = load_data()
     cleaned_data = clean_data(data, country=args.country)
     save_data(cleaned_data, country=args.country)
+    return cleaned_data
 
 
 if __name__ == "__main__":  # pragma: no cover
