@@ -83,11 +83,11 @@ def test_clean_data_transforms_correctly(eu_life_expectancy_raw):
     assert cleaned.index[0] == 0
     assert cleaned.index[-1] == len(cleaned) - 1
 
-    # Verify all units, sex, age, region are strings
-    assert cleaned["unit"].dtype == "object"
-    assert cleaned["sex"].dtype == "object"
-    assert cleaned["age"].dtype == "object"
-    assert cleaned["region"].dtype == "object"
+    # Verify all units, sex, age, region are strings (object or StringDtype)
+    assert pd.api.types.is_string_dtype(cleaned["unit"])
+    assert pd.api.types.is_string_dtype(cleaned["sex"])
+    assert pd.api.types.is_string_dtype(cleaned["age"])
+    assert pd.api.types.is_string_dtype(cleaned["region"])
 
 
 @patch('pandas.DataFrame.to_csv')
