@@ -165,13 +165,13 @@ def clean_data(df: pd.DataFrame, country: Optional[Region]) -> pd.DataFrame:
     return df
 
 
-def save_data(df: pd.DataFrame, country: Region, output_file: Optional[str]) -> None:
+def save_data(df: pd.DataFrame, country: Region, output_file: Optional[str] = None) -> None:
     """
     Save cleaned DataFrame to a CSV file.
     Args:
         df: Cleaned DataFrame to save
         country: Region enum for the country
-        output_file: Path to output CSV file
+        output_file: Path to output CSV file (optional, defaults to data/{country}_life_expectancy_raw.tsv)
     """
     # Set default paths relative to the script location
     script_dir = Path(__file__).parent
