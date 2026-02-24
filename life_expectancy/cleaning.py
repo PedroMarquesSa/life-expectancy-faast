@@ -6,8 +6,8 @@ Saves the cleaned data to a CSV file.
 from pathlib import Path
 import argparse
 from enum import Enum
-import pandas as pd
 from typing import Optional
+import pandas as pd
 
 
 class Region(Enum):
@@ -171,7 +171,7 @@ def save_data(df: pd.DataFrame, country: Region, output_file: Optional[str] = No
     Args:
         df: Cleaned DataFrame to save
         country: Region enum for the country
-        output_file: Path to output CSV file (optional, defaults to data/{country}_life_expectancy_raw.tsv)
+        output_file: Path to output CSV file (optional)
     """
     # Set default paths relative to the script location
     script_dir = Path(__file__).parent
