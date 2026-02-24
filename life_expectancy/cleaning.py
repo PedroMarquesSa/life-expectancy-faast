@@ -5,10 +5,98 @@ Saves the cleaned data to a CSV file.
 
 from pathlib import Path
 import argparse
+from enum import Enum
+from typing import Optional
 import pandas as pd
 
 
-def load_data(input_file: str = None) -> pd.DataFrame:
+class Region(Enum):
+    """Enum containing all possible region codes in the life expectancy dataset."""
+    AL = "AL"
+    AM = "AM"
+    AT = "AT"
+    AZ = "AZ"
+    BE = "BE"
+    BG = "BG"
+    BY = "BY"
+    CH = "CH"
+    CY = "CY"
+    CZ = "CZ"
+    DE = "DE"
+    DE_TOT = "DE_TOT"
+    DK = "DK"
+    EA18 = "EA18"
+    EA19 = "EA19"
+    EE = "EE"
+    EEA30_2007 = "EEA30_2007"
+    EEA31 = "EEA31"
+    EFTA = "EFTA"
+    EL = "EL"
+    ES = "ES"
+    EU27_2007 = "EU27_2007"
+    EU27_2020 = "EU27_2020"
+    EU28 = "EU28"
+    FI = "FI"
+    FR = "FR"
+    FX = "FX"
+    GE = "GE"
+    HR = "HR"
+    HU = "HU"
+    IE = "IE"
+    IS = "IS"
+    IT = "IT"
+    LI = "LI"
+    LT = "LT"
+    LU = "LU"
+    LV = "LV"
+    MD = "MD"
+    ME = "ME"
+    MK = "MK"
+    MT = "MT"
+    NL = "NL"
+    NO = "NO"
+    PL = "PL"
+    PT = "PT"
+    RO = "RO"
+    RS = "RS"
+    RU = "RU"
+    SE = "SE"
+    SI = "SI"
+    SK = "SK"
+    SM = "SM"
+    TR = "TR"
+    UA = "UA"
+    UK = "UK"
+    XK = "XK"
+
+    @classmethod
+    def countries(cls) -> list["Region"]:
+        """
+        Return a list of Region members that represent actual countries.
+
+        Excludes aggregate regions like EU27, EA18, EFTA, etc.
+
+        Returns:
+            List of Region enum members representing individual countries
+        """
+        # Define aggregate/non-country region codes to exclude
+        aggregates = {
+            "DE_TOT",  # Germany total (aggregate)
+            "EA18",    # Euro area (18 countries)
+            "EA19",    # Euro area (19 countries)
+            "EEA30_2007",  # European Economic Area
+            "EEA31",   # European Economic Area
+            "EFTA",    # European Free Trade Association
+            "EU27_2007",  # European Union (27 countries, 2007 definition)
+            "EU27_2020",  # European Union (27 countries, 2020 definition)
+            "EU28",    # European Union (28 countries)
+            "FX",      # France (metropolitan)
+        }
+
+        return [region for region in cls if region.name not in aggregates]
+
+
+def load_data(input_file: Optional[str] = None) -> pd.DataFrame:
     """
     Load EU life expectancy data.
     Args:
@@ -26,12 +114,12 @@ def load_data(input_file: str = None) -> pd.DataFrame:
     return df
 
 
-def clean_data(df: pd.DataFrame, country: str = None) -> pd.DataFrame:
+def clean_data(df: pd.DataFrame, country: Optional[Region]) -> pd.DataFrame:
     """
     Clean and process EU life expectancy data for a specified country.
     Args:
         df: DataFrame containing the raw life expectancy data
-        country: Optional country code to filter by
+        country: Optional Region enum to filter by
     Returns:
         Cleaned DataFrame filtered for the specified country
     """
@@ -67,9 +155,9 @@ def clean_data(df: pd.DataFrame, country: str = None) -> pd.DataFrame:
 
     # Filter for specified country if provided
     if country is not None:
-        df = df[df["region"] == country]
+        df = df[df["region"] == country.value]
         if df.empty:
-            raise ValueError(f"No data found for country code: {country}")
+            raise ValueError(f"No data found for country code: {country.value}")
 
     # Reset index to have a clean sequential index
     df = df.reset_index(drop=True)
@@ -77,17 +165,18 @@ def clean_data(df: pd.DataFrame, country: str = None) -> pd.DataFrame:
     return df
 
 
-def save_data(df: pd.DataFrame, country: str, output_file: str = None) -> None:
+def save_data(df: pd.DataFrame, country: Region, output_file: Optional[str] = None) -> None:
     """
     Save cleaned DataFrame to a CSV file.
     Args:
         df: Cleaned DataFrame to save
-        output_file: Path to output CSV file
+        country: Region enum for the country
+        output_file: Path to output CSV file (optional)
     """
     # Set default paths relative to the script location
     script_dir = Path(__file__).parent
     if output_file is None:
-        output_file = script_dir / "data" / f"{country.lower()}_life_expectancy_raw.tsv"
+        output_file = script_dir / "data" / f"{country.value.lower()}_life_expectancy_raw.tsv"
 
     # Save to CSV without index
     df.to_csv(output_file, index=False)
@@ -106,9 +195,12 @@ def main():  # pragma: no cover
     )
     args = parser.parse_args()
 
+    # Convert string to Region enum
+    country = Region[args.country]
+
     data = load_data()
-    cleaned_data = clean_data(data, country=args.country)
-    save_data(cleaned_data, country=args.country)
+    cleaned_data = clean_data(data, country=country)
+    save_data(cleaned_data, country=country)
     return cleaned_data
 
 
