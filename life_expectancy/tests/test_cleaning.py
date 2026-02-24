@@ -4,7 +4,15 @@ from unittest.mock import patch
 import pandas as pd
 import pytest
 
-from life_expectancy.cleaning import load_data, clean_data, save_data, main, Region
+from life_expectancy.cleaning import (
+    load_data,
+    clean_data,
+    save_data,
+    main,
+    Region,
+    TSVDataLoader,
+    JSONDataLoader
+)
 from . import FIXTURES_DIR
 
 
@@ -19,26 +27,31 @@ def test_load_data_default():
     assert isinstance(df, pd.DataFrame)
     # Verify it has data
     assert len(df) > 0
-    # Verify the first column has the expected format
-    first_col = df.columns[0]
-    assert "geo" in first_col or "time" in first_col
+    # Verify it has the expected columns after loading through TSV loader
+    expected_columns = ["unit", "sex", "age", "region", "year", "value"]
+    assert list(df.columns) == expected_columns
 
 
-def test_load_data_custom_file(eu_life_expectancy_raw):
+def test_load_data_custom_file():
     """Test that load_data can load a custom file"""
     fixture_path = FIXTURES_DIR / "eu_life_expectancy_raw.tsv"
     df = load_data(input_file=str(fixture_path))
 
     # Verify it's a DataFrame
     assert isinstance(df, pd.DataFrame)
-    # Verify it matches the fixture we expect
-    assert len(df) == len(eu_life_expectancy_raw)
-    assert list(df.columns) == list(eu_life_expectancy_raw.columns)
+    # Verify it has the expected columns after loading through TSV loader
+    expected_columns = ["unit", "sex", "age", "region", "year", "value"]
+    assert list(df.columns) == expected_columns
+    # Verify it has data
+    assert len(df) > 0
 
 
-def test_clean_data_no_country_filter(eu_life_expectancy_raw):
+def test_clean_data_no_country_filter():
     """Test clean_data without country filtering"""
-    cleaned = clean_data(eu_life_expectancy_raw, country=None)
+    # Load data through the TSV loader
+    fixture_path = FIXTURES_DIR / "eu_life_expectancy_raw.tsv"
+    raw_data = load_data(input_file=str(fixture_path))
+    cleaned = clean_data(raw_data, country=None)
 
     # Verify the structure
     assert isinstance(cleaned, pd.DataFrame)
@@ -57,9 +70,12 @@ def test_clean_data_no_country_filter(eu_life_expectancy_raw):
     assert len(cleaned["region"].unique()) > 0
 
 
-def test_clean_data_with_country_filter(eu_life_expectancy_raw):
+def test_clean_data_with_country_filter():
     """Test clean_data with country filtering"""
-    cleaned = clean_data(eu_life_expectancy_raw, country=Region.PT)
+    # Load data through the TSV loader
+    fixture_path = FIXTURES_DIR / "eu_life_expectancy_raw.tsv"
+    raw_data = load_data(input_file=str(fixture_path))
+    cleaned = clean_data(raw_data, country=Region.PT)
 
     # Verify only PT data is present
     assert (cleaned["region"] == "PT").all()
@@ -68,16 +84,22 @@ def test_clean_data_with_country_filter(eu_life_expectancy_raw):
     assert len(cleaned) > 0
 
 
-def test_clean_data_invalid_country(eu_life_expectancy_raw):
+def test_clean_data_invalid_country():
     """Test clean_data raises error for non-existent region in data"""
+    # Load data through the TSV loader
+    fixture_path = FIXTURES_DIR / "eu_life_expectancy_raw.tsv"
+    raw_data = load_data(input_file=str(fixture_path))
     # Use a valid Region enum that doesn't exist in the fixture data
     with pytest.raises(ValueError, match="No data found for country code"):
-        clean_data(eu_life_expectancy_raw, country=Region.UK)
+        clean_data(raw_data, country=Region.UK)
 
 
-def test_clean_data_transforms_correctly(eu_life_expectancy_raw):
+def test_clean_data_transforms_correctly():
     """Test that clean_data performs expected transformations"""
-    cleaned = clean_data(eu_life_expectancy_raw, country=Region.PT)
+    # Load data through the TSV loader
+    fixture_path = FIXTURES_DIR / "eu_life_expectancy_raw.tsv"
+    raw_data = load_data(input_file=str(fixture_path))
+    cleaned = clean_data(raw_data, country=Region.PT)
 
     # Verify index is reset (starts at 0)
     assert cleaned.index[0] == 0
@@ -223,12 +245,150 @@ def test_region_countries():
 
 # Integration Test
 
-def test_clean_data_integration(eu_life_expectancy_raw, eu_life_expectancy_expected):
+def test_clean_data_integration(eu_life_expectancy_expected):
     """Integration test: Run the `clean_data` function and compare to expected output"""
-    # Load the raw fixture data
-    cleaned_data = clean_data(eu_life_expectancy_raw, country=None)
+    # Load the raw fixture data through the TSV loader
+    fixture_path = FIXTURES_DIR / "eu_life_expectancy_raw.tsv"
+    raw_data = load_data(input_file=str(fixture_path))
+    cleaned_data = clean_data(raw_data, country=None)
 
     # Compare with expected output
     pd.testing.assert_frame_equal(
         cleaned_data, eu_life_expectancy_expected
     )
+
+# Strategy Pattern Tests - Data Loader Tests
+
+def test_tsv_data_loader():
+    """Test TSVDataLoader can load TSV format correctly"""
+    loader = TSVDataLoader()
+    fixture_path = FIXTURES_DIR / "eu_life_expectancy_raw.tsv"
+    df = loader.load(str(fixture_path))
+
+    # Verify it's a DataFrame
+    assert isinstance(df, pd.DataFrame)
+
+    # Verify it has the expected columns
+    expected_columns = ["unit", "sex", "age", "region", "year", "value"]
+    assert list(df.columns) == expected_columns
+
+    # Verify it has data
+    assert len(df) > 0
+
+    # Verify data types (before cleaning, year and value are still strings)
+    assert pd.api.types.is_string_dtype(df["unit"])
+    assert pd.api.types.is_string_dtype(df["region"])
+
+
+def test_json_data_loader():
+    """Test JSONDataLoader can load JSON format correctly"""
+    loader = JSONDataLoader()
+    fixture_path = FIXTURES_DIR / "eu_life_expectancy_raw.json"
+    df = loader.load(str(fixture_path))
+
+    # Verify it's a DataFrame
+    assert isinstance(df, pd.DataFrame)
+
+    # Verify it has the expected columns
+    expected_columns = ["unit", "sex", "age", "region", "year", "value"]
+    assert list(df.columns) == expected_columns
+
+    # Verify it has data
+    assert len(df) > 0
+
+    # Verify the column mapping worked (country -> region, life_expectancy -> value)
+    assert "country" not in df.columns
+    assert "life_expectancy" not in df.columns
+    assert "region" in df.columns
+    assert "value" in df.columns
+
+
+def test_load_data_with_tsv_loader():
+    """Test load_data with explicit TSV loader"""
+    fixture_path = FIXTURES_DIR / "eu_life_expectancy_raw.tsv"
+    loader = TSVDataLoader()
+    df = load_data(input_file=str(fixture_path), loader=loader)
+
+    # Verify it's a DataFrame
+    assert isinstance(df, pd.DataFrame)
+
+    # Verify it has the expected columns
+    expected_columns = ["unit", "sex", "age", "region", "year", "value"]
+    assert list(df.columns) == expected_columns
+
+
+def test_load_data_with_json_loader():
+    """Test load_data with explicit JSON loader"""
+    fixture_path = FIXTURES_DIR / "eu_life_expectancy_raw.json"
+    loader = JSONDataLoader()
+    df = load_data(input_file=str(fixture_path), loader=loader)
+
+    # Verify it's a DataFrame
+    assert isinstance(df, pd.DataFrame)
+
+    # Verify it has the expected columns
+    expected_columns = ["unit", "sex", "age", "region", "year", "value"]
+    assert list(df.columns) == expected_columns
+
+
+def test_clean_data_from_json():
+    """Test clean_data works with JSON-loaded data"""
+    fixture_path = FIXTURES_DIR / "eu_life_expectancy_raw.json"
+    loader = JSONDataLoader()
+    df = load_data(input_file=str(fixture_path), loader=loader)
+    cleaned = clean_data(df, country=Region.PT)
+
+    # Verify only PT data is present
+    assert (cleaned["region"] == "PT").all()
+
+    # Verify we have PT data
+    assert len(cleaned) > 0
+
+    # Verify data types
+    assert cleaned["year"].dtype == "int64"
+    assert cleaned["value"].dtype == "float64"
+
+
+def test_json_pipeline_end_to_end():
+    """End-to-end integration test using JSON data format"""
+    # Load JSON data
+    fixture_path = FIXTURES_DIR / "eu_life_expectancy_raw.json"
+    loader = JSONDataLoader()
+    raw_data = load_data(input_file=str(fixture_path), loader=loader)
+
+    # Clean the data for Portugal
+    cleaned_data = clean_data(raw_data, country=Region.PT)
+
+    # Load expected output
+    expected_path = FIXTURES_DIR / "pt_life_expectancy_expected_json.csv"
+    expected_data = pd.read_csv(expected_path)
+
+    # Compare with expected output
+    pd.testing.assert_frame_equal(
+        cleaned_data.reset_index(drop=True),
+        expected_data.reset_index(drop=True)
+    )
+
+
+def test_json_pipeline_no_country_filter():
+    """Test JSON pipeline without country filtering"""
+    fixture_path = FIXTURES_DIR / "eu_life_expectancy_raw.json"
+    loader = JSONDataLoader()
+    raw_data = load_data(input_file=str(fixture_path), loader=loader)
+
+    # Clean without country filter
+    cleaned_data = clean_data(raw_data, country=None)
+
+    # Verify we have data from multiple countries
+    assert len(cleaned_data["region"].unique()) > 1
+
+    # Verify AT, BE, BG, PT are all present
+    regions = set(cleaned_data["region"].unique())
+    assert "AT" in regions
+    assert "BE" in regions
+    assert "BG" in regions
+    assert "PT" in regions
+
+    # Verify data structure
+    expected_columns = ["unit", "sex", "age", "region", "year", "value"]
+    assert list(cleaned_data.columns) == expected_columns
