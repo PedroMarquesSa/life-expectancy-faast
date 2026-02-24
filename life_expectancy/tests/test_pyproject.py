@@ -8,7 +8,7 @@ Once you have ensured that the package and its dependencies are installed,
 feel free to delete this file.
 """
 
-from pkg_resources import DistributionNotFound, get_distribution
+from importlib.metadata import version, PackageNotFoundError
 
 import toml
 import pytest
@@ -50,14 +50,14 @@ def test_pyproject():
 def test_package():
     """Test that the life_expectancy package is installed."""
     try:
-        installed_package = get_distribution("life_expectancy")
-    except DistributionNotFound:
+        installed_version = version("life_expectancy")
+    except PackageNotFoundError:
         assert False, (
             "The life_expectancy package is not installed. If you have "
             "installed the package, check that the name of the package "
             "in the pyproject.toml file is `life_expectancy`."
         )
-    assert installed_package.version == "0.1.0", (
+    assert installed_version == "0.1.0", (
         "The life_expectancy package is installed, but it is not the "
         "correct version. If you have installed the package, check "
         "that the version of the package in the pyproject.toml file "
