@@ -1,0 +1,72 @@
+[
+  {
+    "unit": "YR",
+    "sex": "F",
+    "age": "Y65",
+    "country": "AT",
+    "year": 2021,
+    "life_expectancy": 21.2,
+    "flag": "e",
+    "flag_detail": "estimated"
+  },
+  {
+    "unit": "YR",
+    "sex": "F",
+    "age": "Y65",
+    "country": "BE",
+    "year": 2021,
+    "life_expectancy": 22.2,
+    "flag": "e",
+    "flag_detail": "estimated"
+  },
+  {
+    "unit": "YR",
+    "sex": "F",
+    "age": "Y65",
+    "country": "BG",
+    "year": 2021,
+    "life_expectancy": 15.6,
+    "flag": "e",
+    "flag_detail": "estimated"
+  },
+  {
+    "unit": "YR",
+    "sex": "M",
+    "age": "Y65",
+    "country": "PT",
+    "year": 2021,
+    "life_expectancy": 17.5,
+    "flag": "e",
+    "flag_detail": "estimated"
+  },
+  {
+    "unit": "YR",
+    "sex": "F",
+    "age": "Y65",
+    "country": "PT",
+    "year": 2021,
+    "life_expectancy": 21.0,
+    "flag": "e",
+    "flag_detail": "estimated"
+  },
+  {
+    "unit": "YR",
+    "sex": "M",
+    "age": "Y65",
+    "country": "PT",
+    "year": 2020,
+    "life_expectancy": 17.2,
+    "flag": "e",
+    "flag_detail": "estimated"
+  },
+  {
+    "unit": "YR",
+    "sex": "F",
+    "age": "Y65",
+    "country": "PT",
+    "year": 2020,
+    "life_expectancy": 20.8,
+    "flag": "e",
+    "flag_detail": "estimated"
+  }
+]
