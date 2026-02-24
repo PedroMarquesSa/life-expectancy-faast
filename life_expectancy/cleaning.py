@@ -7,6 +7,7 @@ from pathlib import Path
 import argparse
 from enum import Enum
 import pandas as pd
+from typing import Optional
 
 
 class Region(Enum):
@@ -95,7 +96,7 @@ class Region(Enum):
         return [region for region in cls if region.name not in aggregates]
 
 
-def load_data(input_file: str = None) -> pd.DataFrame:
+def load_data(input_file: Optional[str] = None) -> pd.DataFrame:
     """
     Load EU life expectancy data.
     Args:
@@ -113,7 +114,7 @@ def load_data(input_file: str = None) -> pd.DataFrame:
     return df
 
 
-def clean_data(df: pd.DataFrame, country: Region | None = None) -> pd.DataFrame:
+def clean_data(df: pd.DataFrame, country: Optional[Region]) -> pd.DataFrame:
     """
     Clean and process EU life expectancy data for a specified country.
     Args:
@@ -164,7 +165,7 @@ def clean_data(df: pd.DataFrame, country: Region | None = None) -> pd.DataFrame:
     return df
 
 
-def save_data(df: pd.DataFrame, country: Region, output_file: str | None = None) -> None:
+def save_data(df: pd.DataFrame, country: Region, output_file: Optional[str]) -> None:
     """
     Save cleaned DataFrame to a CSV file.
     Args:
